@@ -11,7 +11,7 @@
 :root{--gx:50%;--ink:#24221e;--soft:#8d877b;--paper:#fbfaf6;--line:#e6e1d6}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{background:#f5f4ef;color:var(--ink);font-family:"EB Garamond",Georgia,serif;overflow:hidden;-webkit-font-smoothing:antialiased;touch-action:pan-y}
+body{background:#f5f4ef;color:var(--ink);font-family:"EB Garamond",Georgia,serif;overflow:hidden;-webkit-font-smoothing:antialiased;touch-action:none}
 .ui{position:fixed;left:0;right:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:24px 36px;font-family:"EB Garamond",serif;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--soft)}
 .ui.top{top:0}.ui.bot{bottom:0;justify-content:center;gap:28px}
 .ui b{font-weight:500;color:var(--ink)}
@@ -21,7 +21,7 @@ body{background:#f5f4ef;color:var(--ink);font-family:"EB Garamond",Georgia,serif
 #count{min-width:260px;text-align:center}
 #scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;perspective:2600px;perspective-origin:50% 28%}
 #fit,#tilt,#pan,#book{transform-style:preserve-3d}
-#pan{transition:transform 1.25s cubic-bezier(.55,.05,.25,1)}
+#pan{transition:transform 1.1s cubic-bezier(.55,.05,.25,1)}
 #book{position:relative;width:1040px;height:680px}
 .table{position:absolute;top:30px;bottom:-40px;left:20px;right:20px;background:rgba(70,58,35,.13);filter:blur(30px);transform:translateZ(-2px);border-radius:24px;transition:left 1.25s cubic-bezier(.55,.05,.25,1)}
 .closed .table{left:540px}
@@ -39,11 +39,9 @@ body{background:#f5f4ef;color:var(--ink);font-family:"EB Garamond",Georgia,serif
 .strip{transform-origin:0 50%}
 .face{position:absolute;top:0;left:0;height:680px;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .face.bk{transform:rotateY(180deg)}
-/* bleed 2px past the spine so facing pages meet without a hairline */
-.face.full{transform-origin:100% 50%;transform:scaleX(1.004)}
-.face.full.bk{transform-origin:50% 50%;transform:rotateY(180deg) scaleX(1.004) translateX(1px)}
 .face > .pg{position:absolute;top:0}
-.leaf.rest .flat>.face,.leaf.rest .bc>.face,.leaf.rest .strip{visibility:hidden}
+.leaf.rest .flat .face{opacity:.001}
+.flat,.leaf.under{pointer-events:none}
 .leaf:not(.rest)>.full{visibility:hidden}
 .full>.pg{position:absolute;top:0;left:0}
 .popping .sh{position:absolute;inset:0;background:#3a3020;opacity:0;pointer-events:none}

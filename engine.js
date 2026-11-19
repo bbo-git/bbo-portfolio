@@ -37,10 +37,12 @@ function ensureStrips(l){
  const [bf,bs]=face(Bk,WF,-(W-WF),false);bc.appendChild(bf);flat.appendChild(bc);
  const strips=[],shF=[fs],shB=[bs];let parent=flat;
  for(let k=0;k<NS;k++){const x=WF+k*SW;const s=el('strip',`left:${k===0?WF:SW}px;width:${SW}px`);
-  const [a,as]=face(F,SW+.8,-x,false);const [b,bs2]=face(Bk,SW+.8,-(W-x-SW),true);s.append(a,b);parent.appendChild(s);parent=s;strips.push(s);shF.push(as);shB.push(bs2)}
+  const [a,as]=face(F,SW+.8,-x,false);const [b,bs2]=face(Bk,SW+.8,-(W-x-SW)+.8,true);s.append(a,b);parent.appendChild(s);parent=s;strips.push(s);shF.push(as);shB.push(bs2)}
  l.el.appendChild(flat);l.flat=flat;l.strips=strips;l.sF=shF;l.sB=shB;
 }
 function dropStrips(l){if(l.flat){l.flat.remove();l.flat=null;l.strips=null}}
+/* keep the curl strips of the two leaves that can turn next built (and painted, near-invisible) so a turn never starts with blank copies */
+function warm(){leaves.forEach((l,i)=>{if((i===spread-1||i===spread)&&!l.rigidOnly)ensureStrips(l);else if(!l.anim)dropStrips(l)})}
 
 function build(){
  book.querySelectorAll('.leaf,.block,.board6').forEach(n=>n.remove());
@@ -51,7 +53,7 @@ function build(){
  leaves.push(makeLeaf(COVER,B.pages[0].html,true));
  for(let i=1;i<B.N-1;i+=2)leaves.push(makeLeaf(B.pages[i].html,B.pages[i+1].html,false));
  leaves.forEach((l,i)=>{l.phi=l.target=i<spread?180:0});
- render();
+ render();warm();
 }
 
 /* ---------- turning ---------- */
@@ -65,10 +67,11 @@ function doTurn(n){
  const idx=[];if(fwd)for(let i=spread;i<n;i++)idx.push(i);else for(let i=spread-1;i>=n;i--)idx.push(i);
  idx.forEach((i,k)=>{const l=leaves[i],tg=fwd?180:0;l.dir=fwd?1:-1;l.rigid=multi;if(!multi)ensureStrips(l);
   l.zk=k;anim.push({l,from:l.phi,to:tg,t0:now+k*(multi?90:0),d:multi?760:1250});l.target=tg;l.anim=true});
- spread=n;book.classList.toggle('closed',n===0);updatePan();updateCount();loop()}
+ spread=n;book.classList.toggle('closed',n===0);updatePan(multi?0:650);updateCount();loop()}
 let looping=false,lastT=0;
 function loop(){if(looping)return;looping=true;lastT=performance.now();const f=()=>{const now=performance.now(),dt=now-lastT;lastT=now;
-  anim=anim.filter(a=>{const q=Math.min(1,Math.max(0,(now-a.t0)/a.d));a.l.phi=a.from+(a.to-a.from)*ease(q);if(q>=1){a.l.anim=false;dropStrips(a.l)}return q<1});
+  anim=anim.filter(a=>{const q=Math.min(1,Math.max(0,(now-a.t0)/a.d));a.l.phi=a.from+(a.to-a.from)*ease(q);if(q>=1){a.l.anim=false}return q<1});
+  if(!anim.length)warm();
   render();
   if(anim.length)requestAnimationFrame(f);else looping=false};requestAnimationFrame(f)}
 
@@ -77,11 +80,13 @@ function render(){
  const o=Math.min(lf,1),hL=o*(TMIN+TT/2),hR=TMIN+TT/2+(1-o)*TT/2;
  setBlock(blocks.L,hL);setBlock(blocks.R,hR);
  board6.style.transform=`translateZ(${hR+.25}px)`;
- const zOf=i=>{const l=leaves[i],onLeft=l.phi>90;return (onLeft?hL:hR)+1+(l.anim?4+l.zk*.5:0)};
+ const zOf=i=>{const l=leaves[i],onLeft=l.phi>90;return (onLeft?hL:hR)+1+(l.anim?(.4+(3.6+l.zk*.5)*Math.sin(Math.PI*l.phi/180)):-.25*Math.min(4,onLeft?spread-1-i:i-spread))};
+ const near=new Set();leaves.forEach((l,i)=>{if(l.anim){near.add(i-1);near.add(i+1)}});
  leaves.forEach((l,i)=>{
-  const vis=l.anim||i===spread-1||i===spread;
+  const vis=l.anim||(i>=spread-2&&i<=spread+1)||near.has(i);
   l.el.classList.toggle('hidden',!vis);if(!vis)return;
-  l.el.style.transform=`translateZ(${zOf(i)}px) rotateY(${-l.phi}deg)`;
+  l.el.classList.toggle('under',i!==spread-1&&i!==spread);
+  l.el.style.transform=`translateZ(${zOf(i)}px) rotateY(${-l.phi}deg) translateX(520px) scaleX(1.004) translateX(-520px)`;
   const curl=!!(l.strips&&!l.rigid&&l.anim);
   l.el.classList.toggle('rest',!curl);
   const q=l.phi/180,m=Math.sin(Math.PI*q);
@@ -100,7 +105,7 @@ function layout(){mobile=innerWidth<760;
  fit.style.transform=`scale(${s})`;
  if(mobile&&spread>0&&(side<2*spread-1||side>2*spread))side=2*spread-1;if(spread===0)side=0;
  updatePan();updateCount()}
-function updatePan(){let x;if(spread===0)x=-260;else if(!mobile)x=0;else x=(side%2===1)?260:-260;pan.style.transform=`translateX(${x}px)`}
+function updatePan(delay){pan.style.transitionDelay=(mobile&&delay?delay:0)+'ms';let x;if(spread===0)x=-260;else if(!mobile)x=0;else x=(side%2===1)?260:-260;pan.style.transform=`translateX(${x}px)`}
 function chOf(p){const pg=B.pages[p-1];return pg&&pg.ch?pg.ch:null}
 function updateCount(){const c=document.getElementById('count');
  if(spread===0){c.textContent=t('Open het boek','Open the book');return}
@@ -118,16 +123,22 @@ function prev(){if(!mobile){turnTo(spread-1);return}
  if(spread===1){side=0;turnTo(0);return}
  side--;turnTo(spread-1)}
 function gotoPage(p){const s=Math.ceil(p/2);side=p;turnTo(s)}
-function jumpTo(s){spread=s;side=2*s-1;leaves.forEach((l,i)=>{l.phi=l.target=i<s?180:0});book.classList.toggle('closed',s===0);render();updatePan();updateCount()}
+function jumpTo(s){spread=s;side=2*s-1;leaves.forEach((l,i)=>{l.phi=l.target=i<s?180:0});book.classList.toggle('closed',s===0);render();warm();updatePan();updateCount()}
 document.getElementById('next').onclick=next;document.getElementById('prev').onclick=prev;
 document.getElementById('hitR').onclick=next;document.getElementById('hitL').onclick=prev;
 document.getElementById('tocbtn').onclick=()=>{side=2;turnTo(1)};
 document.addEventListener('click',e=>{const li=e.target.closest&&e.target.closest('[data-goto]');if(li){e.stopPropagation();gotoPage(+li.dataset.goto)}
  else if(spread===0&&e.target.closest&&e.target.closest('.cov')){next()}});
 addEventListener('keydown',e=>{if(e.key==='ArrowRight')next();if(e.key==='ArrowLeft')prev()});
-let tx0=null;addEventListener('touchstart',e=>{tx0=e.touches[0].clientX},{passive:true});
-addEventListener('touchend',e=>{if(tx0===null)return;const dx=e.changedTouches[0].clientX-tx0;if(Math.abs(dx)>40)(dx<0?next:prev)();tx0=null},{passive:true});
-addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const x=e.clientX/innerWidth-.5,y=e.clientY/innerHeight-.5;try_=x*8;ptrY=y;document.documentElement.style.setProperty('--gx',(50+x*90).toFixed(1)+'%')});
+/* pointer position tilts the book and moves the gloss: mouse hover on desktop, finger drag on touch */
+function tiltAt(cx,cy){const x=cx/innerWidth-.5,y=cy/innerHeight-.5;try_=x*8;ptrY=y;document.documentElement.style.setProperty('--gx',(50+x*90).toFixed(1)+'%')}
+addEventListener('pointermove',e=>{if(e.pointerType==='mouse')tiltAt(e.clientX,e.clientY)});
+/* touch: a slow drag only tilts; a quick horizontal flick turns the page */
+let tx0=null,ty0=0,tt0=0;
+addEventListener('touchstart',e=>{const p=e.touches[0];tx0=p.clientX;ty0=p.clientY;tt0=performance.now();tiltAt(p.clientX,p.clientY)},{passive:true});
+addEventListener('touchmove',e=>{const p=e.touches[0];tiltAt(p.clientX,p.clientY)},{passive:true});
+addEventListener('touchend',e=>{if(tx0===null)return;const p=e.changedTouches[0],dx=p.clientX-tx0,dy=p.clientY-ty0,dt=performance.now()-tt0;
+ if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.5&&dt<450)(dx<0?next:prev)();tx0=null},{passive:true});
 document.querySelectorAll('.ui.top button[data-l]').forEach(b=>b.onclick=()=>{lang=b.dataset.l;document.documentElement.lang=lang;document.getElementById('tocbtn').textContent=t('INHOUD','CONTENTS');document.querySelectorAll('.ui.top button[data-l]').forEach(x=>x.classList.toggle('on',x===b));build();updateCount()});
 addEventListener('resize',layout);
 
