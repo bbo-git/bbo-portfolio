@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Book of Jairo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--gx:50%;--ink:#24221e;--soft:#8d877b;--paper:#fbfaf6;--line:#e6e1d6}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#f5f4ef;color:var(--ink);font-family:"EB Garamond",Georgia,serif;overflow:hidden;-webkit-font-smoothing:antialiased;touch-action:pan-y}
+.ui{position:fixed;left:0;right:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:24px 36px;font-family:"EB Garamond",serif;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--soft)}
+.ui.top{top:0}.ui.bot{bottom:0;justify-content:center;gap:28px}
+.ui b{font-weight:500;color:var(--ink)}
+.ui button{background:none;border:0;font:inherit;letter-spacing:inherit;text-transform:inherit;color:var(--soft);cursor:pointer;padding:6px 8px}
+.ui button:hover{color:var(--ink)}
+.ui .on{color:var(--ink);border-bottom:1px solid var(--ink)}
+#count{min-width:260px;text-align:center}
+#scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;perspective:2600px;perspective-origin:50% 28%}
+#fit,#tilt,#pan,#book{transform-style:preserve-3d}
+#pan{transition:transform 1.25s cubic-bezier(.55,.05,.25,1)}
+#book{position:relative;width:1040px;height:680px}
+.table{position:absolute;top:30px;bottom:-40px;left:20px;right:20px;background:rgba(70,58,35,.13);filter:blur(30px);transform:translateZ(-2px);border-radius:24px;transition:left 1.25s cubic-bezier(.55,.05,.25,1)}
+.closed .table{left:540px}
+/* page block */
+.block{position:absolute;top:0;width:520px;height:680px;transform-style:preserve-3d}
+.block .topf{position:absolute;inset:0;background:var(--paper)}
+.block .edgeB{position:absolute;left:0;width:520px;top:680px;transform-origin:top;transform:rotateX(90deg);background:linear-gradient(180deg,rgba(55,44,26,.42),rgba(55,44,26,.14) 45%,rgba(55,44,26,.05) 85%,rgba(55,44,26,.22)),repeating-linear-gradient(180deg,#e9e3d6 0 .7px,#fffefb .7px 1.6px)}
+.block .edgeS{position:absolute;top:0;height:680px;background:linear-gradient(90deg,rgba(55,44,26,.42),rgba(55,44,26,.14) 45%,rgba(55,44,26,.05) 85%,rgba(55,44,26,.22)),repeating-linear-gradient(90deg,#e9e3d6 0 .7px,#fffefb .7px 1.6px)}
+.block .contact{position:absolute;inset:-3px;background:rgba(45,36,20,.35);filter:blur(5px);transform:translateZ(-.6px)}
+.block .topf{box-shadow:inset 0 -2px 3px -1px rgba(55,44,26,.18)}
+.board{position:absolute;background:linear-gradient(180deg,#ece8e0,#e2ddd3)}
+/* leaves */
+.leaf{position:absolute;left:520px;top:0;width:520px;height:680px;transform-origin:0 50%;transform-style:preserve-3d}
+.flat,.strip,.bc,.pieces{position:absolute;top:0;height:680px;transform-style:preserve-3d}
+.strip{transform-origin:0 50%}
+.face{position:absolute;top:0;left:0;height:680px;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.face.bk{transform:rotateY(180deg)}
+/* bleed 2px past the spine so facing pages meet without a hairline */
+.face.full{transform-origin:100% 50%;transform:scaleX(1.004)}
+.face.full.bk{transform-origin:50% 50%;transform:rotateY(180deg) scaleX(1.004) translateX(1px)}
+.face > .pg{position:absolute;top:0}
+.leaf.rest .flat>.face,.leaf.rest .bc>.face,.leaf.rest .strip{visibility:hidden}
+.leaf:not(.rest)>.full{visibility:hidden}
+.full>.pg{position:absolute;top:0;left:0}
+.popping .sh{position:absolute;inset:0;background:#3a3020;opacity:0;pointer-events:none}
+/* page content */
+.pg{width:520px;height:680px;position:relative;background-color:var(--paper);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .35 0 0 0 0 .25 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");overflow:hidden}
+.pg.r::after,.pg.l::after{content:"";position:absolute;top:0;bottom:0;width:70px;pointer-events:none}
+.pg.r::after{left:0;background:linear-gradient(90deg,rgba(80,65,40,.16),rgba(80,65,40,.04) 35%,rgba(80,65,40,0))}
+.pg.l::after{right:0;background:linear-gradient(270deg,rgba(80,65,40,.16),rgba(80,65,40,.04) 35%,rgba(80,65,40,0))}
+.rh{position:absolute;top:34px;font-size:9.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--soft)}
+.l .rh{left:62px}.r .rh{right:62px}
+.fo{position:absolute;bottom:32px;font-size:10px;letter-spacing:.18em;color:var(--soft)}
+.l .fo{left:62px}.r .fo{right:62px}
+.num{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:120px;line-height:.8;color:#d8d2c4}
+.ttl{font-family:"Cormorant Garamond",serif;font-weight:400;font-size:56px;line-height:1;letter-spacing:-.01em;margin:10px 0 14px}
+.h2{font-family:"Cormorant Garamond",serif;font-weight:400;font-size:38px;line-height:1.05;margin:0 0 6px}
+.lede{font-family:"Cormorant Garamond",serif;font-style:italic;font-weight:400;font-size:19px;line-height:1.3;color:#4a453c}
+.cols{column-count:2;column-gap:24px;font-size:11.2px;line-height:1.52;text-align:justify;hyphens:auto;-webkit-hyphens:auto;color:#2f2c27;font-variant-numeric:oldstyle-nums}
+.cols p{text-indent:1.2em}
+.cols p:first-child{text-indent:0}
+.cols p:first-child::first-letter{font-family:"Cormorant Garamond",serif;float:left;font-size:44px;line-height:.82;padding:3px 5px 0 0;color:var(--ink)}
+.rule{width:28px;height:1px;background:#cfc8b9;margin:18px 0}
+.cap{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);line-height:1.6}
+.cap i{font-style:normal;color:var(--ink)}
+.photo{position:absolute;overflow:hidden;background:#222}
+.photo img,.photo video{display:block;width:100%;height:100%;object-fit:cover}
+.photo::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,0) 32%,rgba(255,255,255,.26) 47%,rgba(255,255,255,0) 60%);background-size:260% 100%;background-position:var(--gx) 0;pointer-events:none}
+.print{position:absolute;background:#fff;padding:6px;box-shadow:0 1px 1px rgba(0,0,0,.06),0 10px 22px -12px rgba(60,48,25,.45)}
+.print .photo{position:relative}
+.specs{display:grid;grid-template-columns:auto 1fr;gap:5px 16px;font-size:11px}
+.specs dt{font-size:8.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--soft);padding-top:2px}
+/* pop-up */
+.piece{position:absolute;transform-origin:50% 100%;transform-style:preserve-3d}
+.band{position:absolute;transform-origin:50% 100%;transform-style:preserve-3d}
+.pf,.pb{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.pb{transform:rotateY(180deg)}
+.piece .in{position:absolute;top:0;height:100%}
+.card{position:absolute;inset:0;background:#fff;border:1px solid var(--line);box-shadow:inset 0 0 0 6px #fff}
+.cut{position:absolute;inset:0}
+.cut img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff) drop-shadow(0 1px 1px rgba(50,40,20,.18))}
+.gl{position:absolute;inset:0;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;background:linear-gradient(110deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.4) 46%,rgba(255,255,255,0) 58%);background-size:260% 100%;background-position:var(--gx) 0;opacity:.8}
+.base{position:absolute;height:5px;background:radial-gradient(closest-side,rgba(40,32,18,.45),rgba(40,32,18,0));transform:translateY(-3px);opacity:0}
+.cast{position:absolute;opacity:0;pointer-events:none;-webkit-mask-image:linear-gradient(to top,#000 10%,rgba(0,0,0,.3));mask-image:linear-gradient(to top,#000 10%,rgba(0,0,0,.3))}
+.cast .cut img{filter:brightness(0) blur(2px)}
+.cast .gl{display:none}
+.cast .in{position:absolute;top:0;height:100%}
+.hit{position:fixed;top:90px;bottom:80px;width:9%;z-index:15;cursor:pointer}
+#hitL{left:0}#hitR{right:0}
+/* cover */
+.cov{position:absolute;inset:0;border-radius:2px 6px 6px 2px;background:linear-gradient(105deg,rgba(255,255,255,0) calc(var(--gx) - 22%),rgba(255,255,255,.7) var(--gx),rgba(255,255,255,0) calc(var(--gx) + 22%)),linear-gradient(180deg,#efebe4,#e5e0d6);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px #dcd6ca;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.cov::before{content:"";position:absolute;left:20px;top:0;bottom:0;width:1px;background:rgba(0,0,0,.07);box-shadow:1px 0 0 rgba(255,255,255,.8)}
+.cov h1{font-family:"Cormorant Garamond",serif;font-weight:400;font-size:54px;color:#cdc6b8;text-shadow:0 1px 0 #fff,0 -1px 0 rgba(0,0,0,.16)}
+.cov h1 i{font-style:italic}
+.cov .r2{width:40px;height:1px;background:#d2cbbd;margin:26px 0;box-shadow:0 1px 0 #fff}
+.cov p{font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:#bbb3a4;text-shadow:0 1px 0 #fff}
+@media (max-width:760px){.ui{padding:16px 18px;font-size:10px}.ui.bot{gap:10px}#count{min-width:110px}.hit{width:16%}}
+
+figure.print{margin:0}
+.print figcaption{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);text-align:center;padding-top:6px}
+.plate{position:absolute;background:#fff;padding:8px;box-shadow:0 1px 1px rgba(0,0,0,.05),0 18px 34px -18px rgba(60,48,25,.45)}
+.plate img{display:block;width:100%;height:100%;object-fit:cover}
+.cap.onphoto{color:rgba(255,255,255,.88);text-shadow:0 1px 6px rgba(0,0,0,.35)}
+.todo{display:block;font-style:italic;color:#b07b4a;text-indent:0}
+.pg a{color:var(--ink);text-decoration:none;border-bottom:1px solid #cdbf9f}
+.toc{list-style:none;margin-top:6px}
+.cols.one{column-count:1;max-width:300px}
+.cols.two{column-count:2;max-width:none}
+.cols.nodrop p:first-child::first-letter{font:inherit;float:none;padding:0;color:inherit}
+.h4{font-family:"Cormorant Garamond",serif;font-weight:400;font-size:21px;margin:22px 0 8px;color:var(--ink)}
+.cutout{position:absolute}
+.cutout img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 18px 18px rgba(60,48,25,.28)) drop-shadow(0 2px 3px rgba(60,48,25,.2))}
+.photo.half::after{display:none}
+.toc li{display:flex;align-items:baseline;gap:12px;padding:3.6px 0;border-bottom:1px solid #eee8dc;cursor:pointer;font-size:13px}
+.toc li:hover .tt{color:#7a5a2c}
+.toc .tn{width:42px;font-family:"Cormorant Garamond",serif;font-size:14px;color:var(--soft)}
+.toc .tt{flex:1}
+.toc .tp{font-size:11px;color:var(--soft);font-variant-numeric:oldstyle-nums}
+.leaf.hidden,.board6.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="ui top"><div><b>The Book of Jairo</b></div><div><button id="tocbtn">INHOUD</button><button data-l="nl" class="on">NL</button><button data-l="en">EN</button></div></div>
+<div id="scene"><div id="fit"><div id="tilt"><div id="pan"><div id="book" class="closed"><div class="table"></div></div></div></div></div></div>
+
+<div class="hit" id="hitL" aria-hidden="true"></div><div class="hit" id="hitR" aria-hidden="true"></div>
+<div class="ui bot"><button id="prev" aria-label="Vorige">←</button><span id="count"></span><button id="next" aria-label="Volgende">→</button></div>
+<script src="content.js"></script>
+<script src="engine.js"></script>
+</body>
+</html>
