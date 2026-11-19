@@ -86,6 +86,8 @@ function render(){
   const vis=l.anim||(i>=spread-2&&i<=spread+1)||near.has(i);
   l.el.classList.toggle('hidden',!vis);if(!vis)return;
   l.el.classList.toggle('under',i!==spread-1&&i!==spread);
+  /* video layers ignore 3D stacking in most browsers: only show them on the open spread when nothing is turning */
+  const vok=(i===spread-1||i===spread)&&!anim.length;if(l.vok!==vok){l.vok=vok;l.el.classList.toggle('vidoff',!vok);l.el.querySelectorAll('video').forEach(v=>{try{vok?v.play():v.pause()}catch(err){}})}
   l.el.style.transform=`translateZ(${zOf(i)}px) rotateY(${-l.phi}deg) translateX(520px) scaleX(1.004) translateX(-520px)`;
   const curl=!!(l.strips&&!l.rigid&&l.anim);
   l.el.classList.toggle('rest',!curl);
