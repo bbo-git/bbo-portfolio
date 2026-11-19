@@ -135,10 +135,14 @@ function tiltAt(cx,cy){const x=cx/innerWidth-.5,y=cy/innerHeight-.5;try_=x*8;ptr
 addEventListener('pointermove',e=>{if(e.pointerType==='mouse')tiltAt(e.clientX,e.clientY)});
 /* touch: a slow drag only tilts; a quick horizontal flick turns the page */
 let tx0=null,ty0=0,tt0=0;
-addEventListener('touchstart',e=>{const p=e.touches[0];tx0=p.clientX;ty0=p.clientY;tt0=performance.now();tiltAt(p.clientX,p.clientY)},{passive:true});
-addEventListener('touchmove',e=>{const p=e.touches[0];tiltAt(p.clientX,p.clientY)},{passive:true});
+/* touch tilt follows the drag distance (a finger moves much less than a mouse), and springs back on release */
+function dragTilt(dx,dy){const k=Math.min(innerWidth,innerHeight),x=Math.max(-1,Math.min(1,dx/(k*.35))),y=Math.max(-1,Math.min(1,dy/(k*.35)));
+ try_=x*12;ptrY=y*1.1;document.documentElement.style.setProperty('--gx',(50+x*80).toFixed(1)+'%')}
+addEventListener('touchstart',e=>{const p=e.touches[0];tx0=p.clientX;ty0=p.clientY;tt0=performance.now()},{passive:true});
+addEventListener('touchmove',e=>{if(tx0===null)return;const p=e.touches[0];dragTilt(p.clientX-tx0,p.clientY-ty0)},{passive:true});
+addEventListener('touchcancel',()=>{tx0=null;dragTilt(0,0)},{passive:true});
 addEventListener('touchend',e=>{if(tx0===null)return;const p=e.changedTouches[0],dx=p.clientX-tx0,dy=p.clientY-ty0,dt=performance.now()-tt0;
- if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.5&&dt<450)(dx<0?next:prev)();tx0=null},{passive:true});
+ if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.5&&dt<450)(dx<0?next:prev)();tx0=null;dragTilt(0,0)},{passive:true});
 document.querySelectorAll('.ui.top button[data-l]').forEach(b=>b.onclick=()=>{lang=b.dataset.l;document.documentElement.lang=lang;document.getElementById('tocbtn').textContent=t('INHOUD','CONTENTS');document.querySelectorAll('.ui.top button[data-l]').forEach(x=>x.classList.toggle('on',x===b));build();updateCount()});
 addEventListener('resize',layout);
 
