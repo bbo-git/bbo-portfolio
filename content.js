@@ -9,7 +9,7 @@ const im=(src,css='')=>`<img src="${IMG+src}" alt="" decoding="sync" style="${cs
 const full=(src,cap)=>`<div class="photo" style="left:0;top:0;width:${W}px;height:${H}px">${im(src)}</div>${cap?`<div class="cap onphoto" style="position:absolute;left:62px;bottom:30px;right:62px">${cap}</div>`:''}`;
 const half=(src,side,cap)=>`<div class="photo half" style="left:0;top:0;width:${W}px;height:${H}px">${im(src,`position:absolute;top:0;left:${side==='l'?0:-W}px;width:${2*W}px;height:${H}px;object-fit:cover`)}</div>${cap?`<div class="cap onphoto" style="position:absolute;right:62px;bottom:30px;width:240px;text-align:right">${cap}</div>`:''}`;
 const print=(src,x,y,w,h,rot=0,cap='')=>`<figure class="print" style="left:${x}px;top:${y}px;width:${w+12}px;transform:rotate(${rot}deg)"><div class="photo" style="position:relative;width:${w}px;height:${h}px">${im(src)}</div>${cap?`<figcaption>${cap}</figcaption>`:''}</figure>`;
-const vprint=(src,x,y,w,h,rot=0,cap='')=>`<figure class="print" style="left:${x}px;top:${y}px;width:${w+12}px;transform:rotate(${rot}deg)"><div class="photo" style="position:relative;width:${w}px;height:${h}px"><video src="${IMG+src}" autoplay muted loop playsinline preload="metadata"></video></div>${cap?`<figcaption>${cap}</figcaption>`:''}</figure>`;
+const vprint=(src,x,y,w,h,rot=0,cap='')=>`<figure class="print" style="left:${x}px;top:${y}px;width:${w+12}px;transform:rotate(${rot}deg)"><div class="photo" style="position:relative;width:${w}px;height:${h}px"><div class="vslot" data-src="${IMG+src}" style="background-image:url(${IMG+src.replace(/\.mp4$/,'-poster.webp')})"></div></div>${cap?`<figcaption>${cap}</figcaption>`:''}</figure>`;
 const plate=(src,w,h,cap)=>`<div class="plate" style="left:${(W-w)/2}px;top:${(H-h)/2-16}px;width:${w}px;height:${h}px">${im(src)}</div>${cap?`<div class="cap" style="position:absolute;left:62px;right:62px;top:${(H+h)/2+2}px;text-align:center">${cap}</div>`:''}`;
 const cols=(ps,force)=>{const n=ps.join('').replace(/<[^>]+>/g,'').length;return `<div class="cols${force||(n<260?' one':'')}${n<140?' nodrop':''}">${ps.map(p=>`<p>${p}</p>`).join('')}</div>`};const _c=0;
 const specs=(rows,css)=>`<dl class="specs" style="position:absolute;${css}">${rows.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('')}</dl>`;
@@ -209,7 +209,7 @@ function media(src,x,y,w,h,rot=0){return isVid(src)?vprint(src,x,y,w,h,rot):prin
 function fitBox(a,bx,by,bw,bh){let w=bw,h=w/a;if(h>bh){h=bh;w=h*a}return [Math.round(bx+(bw-w)/2),Math.round(by+(bh-h)/2),Math.round(w),Math.round(h)]}
 function plateFit(src,mw,mh,capTxt){const [,,w,h]=fitBox(AR(src),0,0,mw,mh);return plate(src,w,h,capTxt)}
 const fullContain=(src,bg,capTxt)=>`<div class="photo" style="left:0;top:0;width:${W}px;height:${H}px;background:${bg}">${im(src,'object-fit:contain')}</div>${capTxt?`<div class="cap onphoto" style="position:absolute;left:62px;bottom:30px;right:62px">${capTxt}</div>`:''}`;
-const fullVid=(src,capTxt)=>`<div class="photo" style="left:0;top:0;width:${W}px;height:${H}px"><video src="${IMG+src}" autoplay muted loop playsinline preload="metadata"></video></div>${capTxt?`<div class="cap onphoto" style="position:absolute;left:62px;bottom:30px;right:62px">${capTxt}</div>`:''}`;
+const fullVid=(src,capTxt)=>`<div class="photo" style="left:0;top:0;width:${W}px;height:${H}px"><div class="vslot" data-src="${IMG+src}" style="background-image:url(${IMG+src.replace(/\.mp4$/,'-poster.webp')})"></div></div>${capTxt?`<div class="cap onphoto" style="position:absolute;left:62px;bottom:30px;right:62px">${capTxt}</div>`:''}`;
 function hero(d,mode){
  if(d.heroC)return fullContain(d.heroC[0],d.heroC[1],d.heroC[2]);
  if(d.full&&mode!=='plate')return full(d.full);
@@ -254,7 +254,7 @@ function opener2(n,d,side){let s=opener(n,d.title,d.lede,d.intro);
   else s+=print(src,62,680-58-h-12,w,h,-1)+cap(c,`left:${62+w+40}px;bottom:72px;width:180px`)}
  return s}
 function videoPlate(src,capTxt,snd){const a=AR(src),w=a>1?420:300,h=Math.round(w/a);
- return `<div class="plate" style="left:${(W-w-16)/2}px;top:${(H-h)/2-30}px;width:${w}px;height:${h}px"><video src="${IMG+src}" style="display:block;width:100%;height:100%"></video>${snd?`<button class="snd" aria-label="sound">♪ <span>${t('geluid aan','sound on')}</span><span>${t('geluid uit','sound off')}</span></button>`:''}</div>${capTxt?`<div class="cap" style="position:absolute;left:62px;right:62px;top:${(H+h)/2-4}px;text-align:center">${capTxt}</div>`:''}`}
+ return `<div class="plate" style="left:${(W-w-16)/2}px;top:${(H-h)/2-30}px;width:${w}px;height:${h}px"><div class="vslot" data-src="${IMG+src}" style="background-image:url(${IMG+src.replace(/\.mp4$/,'-poster.webp')})"></div>${snd?`<button class="snd" aria-label="sound">♪ <span>${t('geluid aan','sound on')}</span><span>${t('geluid uit','sound off')}</span></button>`:''}</div>${capTxt?`<div class="cap" style="position:absolute;left:62px;right:62px;top:${(H+h)/2-4}px;text-align:center">${capTxt}</div>`:''}`}
 function spreadPair(d){
  if(d.videoPage)return [()=>full(d.spreadL),()=>videoPlate(d.reel||d.video,d.videoPage,!!d.reel)];
  if(d.spread)return [()=>half(d.spread,'l'),()=>half(d.spread,'r',d.spreadCap)];

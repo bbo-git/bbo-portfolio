@@ -11,7 +11,8 @@ const backOut=x=>{const c=1.55;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)}
 
 function el(cls,css,html){const d=document.createElement('div');if(cls)d.className=cls;if(css)d.style.cssText=css;if(html!==undefined)d.innerHTML=html;return d}
 const noVid=h=>h.replace(/<video[^>]*><\/video>/g,'<div style="width:100%;height:100%;background:#3a342c"></div>');
-function face(html,w,off,back){const f=el('face'+(back?' bk':''),`width:${w}px`);f.innerHTML=html;const pg=f.firstElementChild;pg.style.position='absolute';pg.style.top='0';pg.style.left=off+'px';const s=el('sh');f.appendChild(s);return [f,s]}
+function vslots(f){f.querySelectorAll('video').forEach(v=>{const s=document.createElement('div');s.className='vslot';const src=v.getAttribute('src');s.dataset.src=src;s.style.cssText=v.getAttribute('style')||'';s.style.backgroundImage=`url(${src.replace(/\.mp4$/,'-poster.webp')})`;v.replaceWith(s)})}
+function face(html,w,off,back){const f=el('face'+(back?' bk':''),`width:${w}px`);f.innerHTML=html;vslots(f);const pg=f.firstElementChild;pg.style.position='absolute';pg.style.top='0';pg.style.left=off+'px';const s=el('sh');f.appendChild(s);return [f,s]}
 
 /* ---------- page block ---------- */
 function makeBlock(sd){const b=el('block','left:'+(sd==='L'?0:520)+'px');
@@ -87,7 +88,7 @@ function render(){
   l.el.classList.toggle('hidden',!vis);if(!vis)return;
   l.el.classList.toggle('under',i!==spread-1&&i!==spread);
   /* video layers ignore 3D stacking in most browsers: only show them on the open spread when nothing is turning */
-  const vok=(i===spread-1||i===spread)&&!anim.length;if(l.vok!==vok){l.vok=vok;l.el.classList.toggle('vidoff',!vok);l.el.querySelectorAll('video').forEach(v=>{try{vok?v.play():v.pause()}catch(err){}})}
+  const vf=anim.length?'':i===spread-1?'bk':i===spread?'fr':'';if(l.vf!==vf){l.vf=vf;setVideos(l,vf)}
   l.el.style.transform=`translateZ(${zOf(i)}px) rotateY(${-l.phi}deg) translateX(520px) scaleX(1.004) translateX(-520px)`;
   const curl=!!(l.strips&&!l.rigid&&l.anim);
   l.el.classList.toggle('rest',!curl);
@@ -100,11 +101,20 @@ function render(){
  });
 }
 
+/* a <video> only exists on the open spread; elsewhere the slot shows its poster still */
+function setVideos(l,vf){l.el.querySelectorAll(':scope>.full .vslot').forEach(s=>{let v=s.querySelector('video');const on=!!vf&&(s.closest('.face').classList.contains('bk')===(vf==='bk'));
+ if(on&&!v){v=document.createElement('video');v.src=s.dataset.src;v.muted=true;v.loop=true;v.autoplay=true;v.playsInline=true;v.setAttribute('playsinline','');v.setAttribute('muted','');
+  v.style.cssText='display:block;width:100%;height:100%;object-fit:cover';s.appendChild(v);const pr=v.play();if(pr&&pr.catch)pr.catch(()=>{})}
+ else if(!on&&v){v.pause();v.removeAttribute('src');v.load();v.remove();const b=s.parentElement&&s.parentElement.querySelector('.snd');if(b)b.classList.remove('on')}})}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.snd');if(!b)return;e.stopPropagation();
+ const v=b.parentElement.querySelector('video');if(!v)return;v.muted=!v.muted;if(!v.muted){v.currentTime=0;v.play().catch(()=>{})}b.classList.toggle('on',!v.muted)},true);
 /* ---------- view ---------- */
-let rx=36,ry=0,ptrY=0,try_=0;
+let rx=36,ry=0,ptrY=0,try_=0,FS=1;
+/* touch nudge: the book slides under the finger and turns about the centre of the page in view, then springs back */
+const NG={x:0,y:0,z:0,a:0,b:0,vx:0,vy:0,vz:0,va:0,vb:0,tx:0,ty:0,tz:0,ta:0,tb:0,down:false};
 function layout(){mobile=innerWidth<760;
  const s=mobile?Math.min((innerWidth-28)/W,(innerHeight-150)/(H*.86)):Math.min(1.05,(innerWidth-60)/1120,(innerHeight-150)/(H*.86));
- fit.style.transform=`scale(${s})`;
+ fit.style.transform=`scale(${s})`;FS=s;
  if(mobile&&spread>0&&(side<2*spread-1||side>2*spread))side=2*spread-1;if(spread===0)side=0;
  updatePan();updateCount()}
 function updatePan(delay){pan.style.transitionDelay=(mobile&&delay?delay:0)+'ms';let x;if(spread===0)x=-260;else if(!mobile)x=0;else x=(side%2===1)?260:-260;pan.style.transform=`translateX(${x}px)`}
@@ -137,17 +147,26 @@ function tiltAt(cx,cy){const x=cx/innerWidth-.5,y=cy/innerHeight-.5;try_=x*8;ptr
 addEventListener('pointermove',e=>{if(e.pointerType==='mouse')tiltAt(e.clientX,e.clientY)});
 /* touch: a slow drag only tilts; a quick horizontal flick turns the page */
 let tx0=null,ty0=0,tt0=0;
-/* touch tilt follows the drag distance (a finger moves much less than a mouse), and springs back on release */
-function dragTilt(dx,dy){const k=Math.min(innerWidth,innerHeight),x=Math.max(-1,Math.min(1,dx/(k*.35))),y=Math.max(-1,Math.min(1,dy/(k*.35)));
- try_=x*12;ptrY=y*1.1;document.documentElement.style.setProperty('--gx',(50+x*80).toFixed(1)+'%')}
+function nudge(px,py,dx,dy){const k=Math.min(innerWidth,innerHeight),c=v=>Math.max(-1,Math.min(1,v));
+ const rx_=(px-innerWidth/2)/k,ry_=(py-innerHeight*.5)/k,fx=c(dx/(k*.6)),fy=c(dy/(k*.6));
+ NG.ta=fx*9;NG.tb=-fy*5;NG.tx=fx*34/FS;NG.ty=fy*34/FS/Math.cos(36*Math.PI/180);NG.tz=c((rx_*fy-ry_*fx)*2.2)*5;
+ document.documentElement.style.setProperty('--gx',(50+fx*60).toFixed(1)+'%')}
+function dragTilt(dx,dy){if(!dx&&!dy){NG.tx=NG.ty=NG.tz=NG.ta=NG.tb=0;NG.down=false}}
 addEventListener('touchstart',e=>{const p=e.touches[0];tx0=p.clientX;ty0=p.clientY;tt0=performance.now()},{passive:true});
-addEventListener('touchmove',e=>{if(tx0===null)return;const p=e.touches[0];dragTilt(p.clientX-tx0,p.clientY-ty0)},{passive:true});
+addEventListener('touchmove',e=>{if(tx0===null)return;const p=e.touches[0];NG.down=true;nudge(p.clientX,p.clientY,p.clientX-tx0,p.clientY-ty0)},{passive:true});
 addEventListener('touchcancel',()=>{tx0=null;dragTilt(0,0)},{passive:true});
 addEventListener('touchend',e=>{if(tx0===null)return;const p=e.changedTouches[0],dx=p.clientX-tx0,dy=p.clientY-ty0,dt=performance.now()-tt0;
  if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.5&&dt<450)(dx<0?next:prev)();tx0=null;dragTilt(0,0)},{passive:true});
 document.querySelectorAll('.ui.top button[data-l]').forEach(b=>b.onclick=()=>{lang=b.dataset.l;document.documentElement.lang=lang;document.getElementById('tocbtn').textContent=t('INHOUD','CONTENTS');document.querySelectorAll('.ui.top button[data-l]').forEach(x=>x.classList.toggle('on',x===b));build();updateCount()});
 addEventListener('resize',layout);
 
-(function tl(){const trx=36-ptrY*7;rx+=(trx-rx)*.06;ry+=(try_-ry)*.08;tilt.style.transform=`rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;requestAnimationFrame(tl)})();
+let tlT=performance.now();
+(function tl(){const now=performance.now(),dt=Math.min(.05,(now-tlT)/1000);tlT=now;
+ const trx=36-ptrY*7;rx+=(trx-rx)*.06;ry+=(try_-ry)*.08;
+ /* spring: stiff while the finger holds the book, softer with a little overshoot when released */
+ const K=NG.down?420:170,D=NG.down?38:13;
+ for(const a of ['x','y','z','a','b']){const v='v'+a;NG[v]+=(K*(NG['t'+a]-NG[a])-D*NG[v])*dt;NG[a]+=NG[v]*dt}
+ tilt.style.transform=`rotateX(${(rx+NG.b).toFixed(2)}deg) rotateY(${(ry+NG.a).toFixed(2)}deg) translate3d(${NG.x.toFixed(2)}px,${NG.y.toFixed(2)}px,0) rotateZ(${NG.z.toFixed(3)}deg)`;
+ requestAnimationFrame(tl)})();
 build();layout();
 (function(){const id=location.hash.slice(1);if(!id)return;const c=B.chapters.find(x=>x.id===id);if(c)jumpTo(Math.ceil(c.start/2));})();

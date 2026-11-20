@@ -8,18 +8,19 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
+html,body{width:100%;height:100%;overflow:hidden}
 :root{--gx:50%;--ink:#24221e;--soft:#8d877b;--paper:#fbfaf6;--line:#e6e1d6}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{background:#f5f4ef;color:var(--ink);font-family:"EB Garamond",Georgia,serif;overflow:hidden;-webkit-font-smoothing:antialiased;touch-action:none}
-.ui{position:fixed;left:0;right:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:24px 36px;font-family:"EB Garamond",serif;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--soft)}
+.ui{position:fixed;left:0;right:0;z-index:20;transform:translateZ(0);display:flex;justify-content:space-between;align-items:center;padding:24px 36px;font-family:"EB Garamond",serif;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--soft)}
 .ui.top{top:0}.ui.bot{bottom:0;justify-content:center;gap:28px}
 .ui b{font-weight:500;color:var(--ink)}
 .ui button{background:none;border:0;font:inherit;letter-spacing:inherit;text-transform:inherit;color:var(--soft);cursor:pointer;padding:6px 8px}
 .ui button:hover{color:var(--ink)}
 .ui .on{color:var(--ink);border-bottom:1px solid var(--ink)}
 #count{min-width:260px;text-align:center}
-#scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;perspective:2600px;perspective-origin:50% 28%}
+#scene{position:absolute;inset:0;z-index:1;overflow:hidden;display:flex;align-items:center;justify-content:center;perspective:2600px;perspective-origin:50% 28%}
 #fit,#tilt,#pan,#book{transform-style:preserve-3d}
 #pan{transition:transform 1.1s cubic-bezier(.55,.05,.25,1)}
 #book{position:relative;width:1040px;height:680px}
@@ -42,7 +43,11 @@ body{background:#f5f4ef;color:var(--ink);font-family:"EB Garamond",Georgia,serif
 .face > .pg{position:absolute;top:0}
 .leaf.rest .flat .face{opacity:.001}
 .flat,.leaf.under{pointer-events:none}
-.leaf.vidoff video{visibility:hidden}
+
+.vslot{background:#2b2620 center/cover no-repeat}
+.photo .vslot,.plate .vslot{position:relative;width:100%;height:100%}
+.snd{position:absolute;right:16px;bottom:16px;font:500 10px/1 "EB Garamond",serif;letter-spacing:.2em;text-transform:uppercase;color:#fff;background:rgba(20,16,10,.55);border:1px solid rgba(255,255,255,.5);border-radius:20px;padding:7px 12px;cursor:pointer;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.snd span+span,.snd.on span:first-child{display:none}.snd.on span+span{display:inline}
 .leaf:not(.rest)>.full{visibility:hidden}
 .full>.pg{position:absolute;top:0;left:0}
 .popping .sh{position:absolute;inset:0;background:#3a3020;opacity:0;pointer-events:none}
@@ -128,7 +133,7 @@ figure.print{margin:0}
 
 <div class="hit" id="hitL" aria-hidden="true"></div><div class="hit" id="hitR" aria-hidden="true"></div>
 <div class="ui bot"><button id="prev" aria-label="Vorige">←</button><span id="count"></span><button id="next" aria-label="Volgende">→</button></div>
-<script src="content.js?v=1795124993"></script>
-<script src="engine.js?v=1795124993"></script>
+<script src="content.js?v=1795125495"></script>
+<script src="engine.js?v=1795125495"></script>
 </body>
 </html>
