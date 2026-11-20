@@ -151,11 +151,25 @@ document.getElementById('hitR').onclick=next;document.getElementById('hitL').onc
 document.getElementById('tocbtn').onclick=()=>{side=2;turnTo(1)};
 document.addEventListener('click',e=>{const li=e.target.closest&&e.target.closest('[data-goto]');if(li){e.stopPropagation();gotoPage(+li.dataset.goto)}
  else if(spread===0&&e.target.closest&&e.target.closest('.cov')){next()}});
-addEventListener('keydown',e=>{if(e.key==='ArrowRight')next();if(e.key==='ArrowLeft')prev()});
+addEventListener('keydown',e=>{if(POLA.open){if(e.key==='Escape')closePola();return}if(e.key==='ArrowRight')next();if(e.key==='ArrowLeft')prev()});
+/* ---------- YouTube links open as an instant-camera print ---------- */
+const POLA={open:false,el:null};
+function ytId(u){const m=u.match(/(?:youtu\.be\/|[?&]v=|\/shorts\/|\/embed\/)([\w-]{11})/);return m?m[1]:null}
+function openPola(url,label){const id=ytId(url);if(!id)return false;const tall=/\/shorts\//.test(url);
+ const w=document.createElement('div');w.className='pola-wrap';
+ w.innerHTML=`<div class="pola${tall?' tall':''}" role="dialog" aria-label="video"><div class="pola-img" style="background-image:url(https://i.ytimg.com/vi/${id}/hqdefault.jpg)"><iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&rel=0&modestbranding=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="video"></iframe></div>
+  <div class="pola-cap"><span>${label}</span><a href="${url}" target="_blank" rel="noopener">YouTube ↗</a></div><button class="pola-x" aria-label="${t('Sluiten','Close')}">×</button></div>`;
+ document.body.appendChild(w);POLA.open=true;POLA.el=w;requestAnimationFrame(()=>w.classList.add('in'));
+ w.addEventListener('click',ev=>{if(ev.target===w||ev.target.closest('.pola-x'))closePola()});return true}
+function closePola(){const w=POLA.el;if(!w)return;POLA.open=false;POLA.el=null;w.classList.remove('in');setTimeout(()=>w.remove(),350)}
+function ytOpen(a){const u=a.dataset.yt;const tx=(a.textContent||'').trim(),lab=(document.getElementById('count').textContent||'')+(/^video\s*\d/i.test(tx)?' · '+tx:'');
+ openPola(u,lab)}
+for(const tgt of [window,document])tgt.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-yt]');if(!a||POLA.open)return;e.preventDefault();e.stopPropagation();ytOpen(a)},true);
+addEventListener('keydown',e=>{const a=e.target.closest&&e.target.closest('[data-yt]');if(a&&(e.key==='Enter'||e.key===' ')&&!POLA.open){e.preventDefault();ytOpen(a)}});
 /* clicking the outer part of a page turns it (the fixed hit zones sit at the screen edges, which on a wide window are beside the book) */
 function edgeZone(x,y){if(spread===0||anim.length&&false)return 0;const r=book.getBoundingClientRect();if(y<r.top||y>r.bottom)return 0;
  const z=Math.min(170,r.width*.16);if(x>r.right-z&&x<=r.right+8&&spread<S)return 1;if(x<r.left+z&&x>=r.left-8)return -1;return 0}
-const NOTURN='a,button,[data-goto],.snd,.ui,video,.hit';
+const NOTURN='a,button,[data-goto],[data-yt],.snd,.ui,video,.hit';
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest(NOTURN))return;const z=edgeZone(e.clientX,e.clientY);if(z>0)next();else if(z<0)prev()});
 addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const z=e.target.closest&&e.target.closest(NOTURN)?0:edgeZone(e.clientX,e.clientY);document.body.style.cursor=z?'pointer':''});
 /* pointer position tilts the book and moves the gloss: mouse hover on desktop, finger drag on touch */
@@ -168,7 +182,7 @@ function nudge(px,py,dx,dy){const k=Math.min(innerWidth,innerHeight),c=v=>Math.m
  NG.ta=fx*9;NG.tb=-fy*5;NG.tx=fx*34/FS;NG.ty=fy*34/FS/Math.cos(36*Math.PI/180);NG.tz=c((rx_*fy-ry_*fx)*2.2)*5;
  document.documentElement.style.setProperty('--gx',(50+fx*60).toFixed(1)+'%')}
 function dragTilt(dx,dy){if(!dx&&!dy){NG.tx=NG.ty=NG.tz=NG.ta=NG.tb=0;NG.down=false}}
-addEventListener('touchstart',e=>{const p=e.touches[0];tx0=p.clientX;ty0=p.clientY;tt0=performance.now()},{passive:true});
+addEventListener('touchstart',e=>{if(POLA.open){tx0=null;return}const p=e.touches[0];tx0=p.clientX;ty0=p.clientY;tt0=performance.now()},{passive:true});
 addEventListener('touchmove',e=>{if(tx0===null)return;const p=e.touches[0];NG.down=true;nudge(p.clientX,p.clientY,p.clientX-tx0,p.clientY-ty0)},{passive:true});
 addEventListener('touchcancel',()=>{tx0=null;dragTilt(0,0)},{passive:true});
 addEventListener('touchend',e=>{if(tx0===null)return;const p=e.changedTouches[0],dx=p.clientX-tx0,dy=p.clientY-ty0,dt=performance.now()-tt0;

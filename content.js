@@ -14,7 +14,8 @@ const plate=(src,w,h,cap)=>`<div class="plate" style="left:${(W-w)/2}px;top:${(H
 const cols=(ps,force)=>{const n=ps.join('').replace(/<[^>]+>/g,'').length;return `<div class="cols${force||(n<260?' one':'')}${n<140?' nodrop':''}">${ps.map(p=>`<p>${p}</p>`).join('')}</div>`};const _c=0;
 const specs=(rows,css)=>`<dl class="specs" style="position:absolute;${css}">${rows.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('')}</dl>`;
 const cap=(txt,css)=>`<div class="cap" style="position:absolute;${css}">${txt}</div>`;
-const link=(url,txt)=>`<a href="${url}" target="_blank" rel="noopener">${txt}</a>`;
+/* YouTube links are not real links: they open the instant-camera print (a plain <a> gets taken over by some viewers) */
+const link=(url,txt)=>/youtu\.?be/.test(url)?`<span class="ytl" role="button" tabindex="0" data-yt="${url}">${txt}</span>`:`<a href="${url}" target="_blank" rel="noopener">${txt}</a>`;
 const todo=txt=>`<span class="todo">${txt}</span>`;
 const opener=(num,title,lede,paras)=>`<div style="position:absolute;left:62px;right:62px;top:92px"><div class="num">${num}</div><h2 class="ttl">${title}</h2><p class="lede">${lede}</p><div class="rule"></div>${cols(paras)}</div>`;
 const section=(title,lede,paras,top=92)=>`<div style="position:absolute;left:62px;right:62px;top:${top}px"><h3 class="h2">${title}</h3>${lede?`<p class="lede" style="font-size:16px">${lede}</p>`:''}<div class="rule"></div>${cols(paras)}</div>`;
