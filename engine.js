@@ -124,7 +124,14 @@ function updateCount(){const c=document.getElementById('count');
  const pl=2*spread-1,pr=2*spread,ch=chOf(mobile?side:pr)||chOf(pl);
  const label=ch?`${ch.num} · ${ch.title}`:(spread===1?t('Inhoud','Contents'):t('Colofon','Colophon'));
  c.textContent=label;
- try{const id=ch?ch.id:'';history.replaceState(null,'',id?'#'+id:location.pathname)}catch(e){}}
+ try{const id=ch?ch.id:'';history.replaceState(null,'',id?'#'+id:location.pathname)}catch(e){}
+ if(ch)countChapter(ch)}
+/* visitor counting (GoatCounter, no cookies): the page load counts itself; each chapter is counted once per visit,
+   only after the reader has stayed on it for 2 s, so flicking through or TOC jumps don't count every chapter passed */
+const SEEN={};let cntT=null;
+function countChapter(ch){clearTimeout(cntT);if(SEEN[ch.id])return;
+ cntT=setTimeout(()=>{if(SEEN[ch.id])return;const gc=window.goatcounter;if(!gc||!gc.count)return;SEEN[ch.id]=1;
+  try{gc.count({path:'/hoofdstuk/'+ch.id,title:ch.num+' · '+ch.title,event:false})}catch(e){}},2000)}
 function next(){if(!mobile){turnTo(spread+1);return}
  if(spread===0){side=1;turnTo(1);return}
  if(side%2===1){side++;updatePan();updateCount();return}
