@@ -103,9 +103,9 @@ function render(){
 
 /* a <video> only exists on the open spread; elsewhere the slot shows its poster still */
 function setVideos(l,vf){l.el.querySelectorAll(':scope>.full .vslot').forEach(s=>{let v=s.querySelector('video');const on=!!vf&&(s.closest('.face').classList.contains('bk')===(vf==='bk'));
- if(on&&!v){v=document.createElement('video');v.src=s.dataset.src;v.muted=true;v.loop=true;v.autoplay=true;v.playsInline=true;v.setAttribute('playsinline','');v.setAttribute('muted','');
+ if(on&&!v){v=document.createElement('video');/* inline first, source last: otherwise iOS opens it full screen */v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.playsInline=true;v.setAttribute('muted','');v.muted=true;v.defaultMuted=true;v.loop=true;v.preload='auto';v.disablePictureInPicture=true;v.src=s.dataset.src;
   v.style.cssText='display:block;width:100%;height:100%;object-fit:cover';s.appendChild(v);const pr=v.play();if(pr&&pr.catch)pr.catch(()=>{})}
- else if(!on&&v){v.pause();v.removeAttribute('src');v.load();v.remove();const b=s.parentElement&&s.parentElement.querySelector('.snd');if(b)b.classList.remove('on')}})}
+ else if(!on&&v){v.muted=true;v.pause();v.remove();const b=s.parentElement&&s.parentElement.querySelector('.snd');if(b)b.classList.remove('on')}})}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.snd');if(!b)return;e.stopPropagation();
  const v=b.parentElement.querySelector('video');if(!v)return;v.muted=!v.muted;if(!v.muted){v.currentTime=0;v.play().catch(()=>{})}b.classList.toggle('on',!v.muted)},true);
 /* ---------- view ---------- */
