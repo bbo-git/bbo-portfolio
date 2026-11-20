@@ -44,7 +44,7 @@ function CHAPTERS(t){
    +vprint('duck-servos.mp4',62,388,120,170)+print('wires.webp',210,388,106,106,1.2)+print('board.webp',342,388,106,106,-1)
    +specs([[t('Hoogte','Height'),'± 15 cm'],[t('Schaal','Scale'),'0,65 × XGO-Duck'],['Print','SLA'],[t('Servo’s','Servos'),'Emax ES9051 · ES9251'],[t('Brein','Brain'),'RP2350 · ESP32-CAM']],'left:210px;top:528px')
    +cap(t('Fig. 6–8<br><i>Servo’s, bedrading, print</i>','Fig. 6–8<br><i>Servos, wiring, board</i>'),'left:62px;top:578px;width:132px'),
-  ()=>cutout('duck-real.webp',90,470)+cap(t('Fig. 9<br><i>De Duckling, geprint en bedraad</i>','Fig. 9<br><i>The Duckling, printed and wired</i>'),'right:62px;bottom:62px;width:210px;text-align:right'),
+  ()=>full('duck-front.webp',t('Fig. 9 · <i>de Duckling, geprint en bedraad</i>','Fig. 9 · <i>the Duckling, printed and wired</i>')),
  ]});
 
  /* II — Ceramic Audio */
