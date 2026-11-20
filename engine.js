@@ -81,7 +81,9 @@ function render(){
  const o=Math.min(lf,1),hL=o*(TMIN+TT/2),hR=TMIN+TT/2+(1-o)*TT/2;
  setBlock(blocks.L,hL);setBlock(blocks.R,hR);
  board6.style.transform=`translateZ(${hR+.25}px)`;
- const zOf=i=>{const l=leaves[i],onLeft=l.phi>90;return (onLeft?hL:hR)+1+(l.anim?(.4+(3.6+l.zk*.5)*Math.sin(Math.PI*l.phi/180)):-.25*Math.min(4,onLeft?spread-1-i:i-spread))};
+ const zOf=i=>{const l=leaves[i],onLeft=l.phi>90;return (onLeft?hL:hR)+1+(l.anim?((4+l.zk*.5)*Math.max(0,Math.sin(Math.PI*l.phi/180))):-.25*Math.min(4,onLeft?spread-1-i:i-spread)-(underAnim(i,onLeft)?.5:0))};
+ /* a resting leaf directly under a turning one sinks a little (it is covered), so the turning leaf never needs a sudden lift */
+ function underAnim(i,onLeft){for(const j of [i-1,i+1]){const n=leaves[j];if(n&&n.anim&&(n.phi>90)===onLeft)return true}return false}
  const near=new Set();leaves.forEach((l,i)=>{if(l.anim){near.add(i-1);near.add(i+1)}});
  leaves.forEach((l,i)=>{
   const vis=l.anim||(i>=spread-2&&i<=spread+1)||near.has(i);
@@ -89,7 +91,8 @@ function render(){
   l.el.classList.toggle('under',i!==spread-1&&i!==spread);
   /* video layers ignore 3D stacking in most browsers: only show them on the open spread when nothing is turning */
   const vf=anim.length?'':i===spread-1?'bk':i===spread?'fr':'';if(l.vf!==vf){l.vf=vf;setVideos(l,vf)}
-  l.el.style.transform=`translateZ(${zOf(i)}px) rotateY(${-l.phi}deg) translateX(520px) scaleX(1.004) translateX(-520px)`;
+  const sc=1+.004*(1-Math.max(0,Math.sin(Math.PI*l.phi/180)));/* spine bleed only at rest, fading out while the leaf turns, so the hinge sits exactly on the spine */
+  l.el.style.transform=`translateZ(${zOf(i)}px) rotateY(${-l.phi}deg) translateX(520px) scaleX(${sc.toFixed(5)}) translateX(-520px)`;
   const curl=!!(l.strips&&!l.rigid&&l.anim);
   l.el.classList.toggle('rest',!curl);
   const q=l.phi/180,m=Math.sin(Math.PI*q);
