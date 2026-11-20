@@ -152,6 +152,12 @@ document.getElementById('tocbtn').onclick=()=>{side=2;turnTo(1)};
 document.addEventListener('click',e=>{const li=e.target.closest&&e.target.closest('[data-goto]');if(li){e.stopPropagation();gotoPage(+li.dataset.goto)}
  else if(spread===0&&e.target.closest&&e.target.closest('.cov')){next()}});
 addEventListener('keydown',e=>{if(e.key==='ArrowRight')next();if(e.key==='ArrowLeft')prev()});
+/* clicking the outer part of a page turns it (the fixed hit zones sit at the screen edges, which on a wide window are beside the book) */
+function edgeZone(x,y){if(spread===0||anim.length&&false)return 0;const r=book.getBoundingClientRect();if(y<r.top||y>r.bottom)return 0;
+ const z=Math.min(170,r.width*.16);if(x>r.right-z&&x<=r.right+8&&spread<S)return 1;if(x<r.left+z&&x>=r.left-8)return -1;return 0}
+const NOTURN='a,button,[data-goto],.snd,.ui,video,.hit';
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest(NOTURN))return;const z=edgeZone(e.clientX,e.clientY);if(z>0)next();else if(z<0)prev()});
+addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const z=e.target.closest&&e.target.closest(NOTURN)?0:edgeZone(e.clientX,e.clientY);document.body.style.cursor=z?'pointer':''});
 /* pointer position tilts the book and moves the gloss: mouse hover on desktop, finger drag on touch */
 function tiltAt(cx,cy){const x=cx/innerWidth-.5,y=cy/innerHeight-.5;try_=x*8;ptrY=y;document.documentElement.style.setProperty('--gx',(50+x*90).toFixed(1)+'%')}
 addEventListener('pointermove',e=>{if(e.pointerType==='mouse')tiltAt(e.clientX,e.clientY)});
