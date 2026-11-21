@@ -179,7 +179,7 @@ addEventListener('pointermove',e=>{if(e.pointerType==='mouse')tiltAt(e.clientX,e
 let tx0=null,ty0=0,tt0=0;
 function nudge(px,py,dx,dy){const k=Math.min(innerWidth,innerHeight),c=v=>Math.max(-1,Math.min(1,v));
  const rx_=(px-innerWidth/2)/k,ry_=(py-innerHeight*.5)/k,fx=c(dx/(k*.6)),fy=c(dy/(k*.6));
- NG.ta=fx*9;NG.tb=-fy*5;NG.tx=fx*34/FS;NG.ty=fy*34/FS/Math.cos(36*Math.PI/180);NG.tz=c((rx_*fy-ry_*fx)*2.2)*5;
+ NG.ta=fx*4;NG.tb=-fy*2;NG.tx=fx*12/FS;NG.ty=fy*10/FS;NG.tz=c((rx_*fy-ry_*fx)*2)*1.2;
  document.documentElement.style.setProperty('--gx',(50+fx*60).toFixed(1)+'%')}
 function dragTilt(dx,dy){if(!dx&&!dy){NG.tx=NG.ty=NG.tz=NG.ta=NG.tb=0;NG.down=false}}
 addEventListener('touchstart',e=>{if(POLA.open){tx0=null;return}const p=e.touches[0];tx0=p.clientX;ty0=p.clientY;tt0=performance.now()},{passive:true});
@@ -194,7 +194,7 @@ let tlT=performance.now();
 (function tl(){const now=performance.now(),dt=Math.min(.05,(now-tlT)/1000);tlT=now;
  const trx=36-ptrY*7;rx+=(trx-rx)*.06;ry+=(try_-ry)*.08;
  /* spring: stiff while the finger holds the book, softer with a little overshoot when released */
- const K=NG.down?420:170,D=NG.down?38:13;
+ const K=NG.down?90:55,D=NG.down?19:12.5;/* calm: (near) critically damped, no wobble */
  for(const a of ['x','y','z','a','b']){const v='v'+a;NG[v]+=(K*(NG['t'+a]-NG[a])-D*NG[v])*dt;NG[a]+=NG[v]*dt}
  tilt.style.transform=`rotateX(${(rx+NG.b).toFixed(2)}deg) rotateY(${(ry+NG.a).toFixed(2)}deg) translate3d(${NG.x.toFixed(2)}px,${NG.y.toFixed(2)}px,0) rotateZ(${NG.z.toFixed(3)}deg)`;
  requestAnimationFrame(tl)})();
