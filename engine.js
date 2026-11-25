@@ -43,7 +43,13 @@ function ensureStrips(l){
 }
 function dropStrips(l){if(l.flat){l.flat.remove();l.flat=null;l.strips=null}}
 /* keep the curl strips of the two leaves that can turn next built (and painted, near-invisible) so a turn never starts with blank copies */
-function warm(){leaves.forEach((l,i)=>{if((i===spread-1||i===spread)&&!l.rigidOnly)ensureStrips(l);else if(!l.anim)dropStrips(l)})}
+/* the leaf after next is also pre-built, and building happens in idle time one leaf per tick (never in the landing frame) */
+let warmT=null;
+function warm(){clearTimeout(warmT);setTimeout(()=>decodeLeaves(spread-2,spread+2),200);const need=i=>(i>=spread-1&&i<=spread+1);
+ leaves.forEach((l,i)=>{if(!need(i)&&!l.anim)dropStrips(l)});
+ const todo=leaves.filter((l,i)=>need(i)&&!l.flat&&!l.rigidOnly);
+ const step=()=>{if(anim.length){warmT=setTimeout(step,300);return}const l=todo.shift();if(!l)return;ensureStrips(l);render();warmT=setTimeout(step,120)};
+ warmT=setTimeout(step,350)}
 
 function build(){
  book.querySelectorAll('.leaf,.block,.board6').forEach(n=>n.remove());
@@ -61,8 +67,15 @@ function build(){
 let anim=[];
 /* load and decode every image up front, and keep them referenced, so pages never show up blank */
 const PRE={};
-function preload(){B.pages.forEach(p=>(p.html.match(/src="([^"]+\.webp)"/g)||[]).forEach(m=>{const s=m.slice(5,-1);if(PRE[s])return;const i=new Image();i.src=s;PRE[s]=i;i.decode&&i.decode().catch(()=>{})}))}
-function turnTo(n){n=Math.max(0,Math.min(S,n));if(n===spread)return;doTurn(n)}
+function preload(){B.pages.forEach(p=>(p.html.match(/src="([^"]+\.webp)"/g)||[]).forEach(m=>{const s=m.slice(5,-1);if(PRE[s])return;const i=new Image();i.src=s;PRE[s]=i}))}
+/* decode the images of the pages that a turn will reveal, so they are on screen before the sheet lifts */
+function decodeLeaves(a,b){const ps=[];for(let i=Math.max(0,a);i<=Math.min(leaves.length-1,b);i++)leaves[i].el.querySelectorAll(':scope>.full img').forEach(im=>{if(im.decode)ps.push(im.decode().catch(()=>{}))});return Promise.all(ps)}
+let turnBusy=false;
+function turnTo(n){n=Math.max(0,Math.min(S,n));if(n===spread||turnBusy)return;
+ if(Math.abs(n-spread)>1||anim.length){doTurn(n);return}
+ /* single turn: make sure the page underneath is decoded first (at most 220 ms), then turn */
+ const lo=n>spread?n-1:n-1,hi=n>spread?n+1:n;turnBusy=true;
+ Promise.race([decodeLeaves(lo,hi),new Promise(r=>setTimeout(r,220))]).then(()=>{turnBusy=false;doTurn(n)})}
 function doTurn(n){
  const now=performance.now(),fwd=n>spread,multi=Math.abs(n-spread)>1;
  const idx=[];if(fwd)for(let i=spread;i<n;i++)idx.push(i);else for(let i=spread-1;i>=n;i--)idx.push(i);
@@ -86,7 +99,7 @@ function render(){
  function underAnim(i,onLeft){for(const j of [i-1,i+1]){const n=leaves[j];if(n&&n.anim&&(n.phi>90)===onLeft)return true}return false}
  const near=new Set();leaves.forEach((l,i)=>{if(l.anim){near.add(i-1);near.add(i+1)}});
  leaves.forEach((l,i)=>{
-  const vis=l.anim||(i>=spread-2&&i<=spread+1)||near.has(i);
+  const vis=l.anim||(i>=spread-2&&i<=spread+2)||near.has(i);
   l.el.classList.toggle('hidden',!vis);if(!vis)return;
   l.el.classList.toggle('under',i!==spread-1&&i!==spread);
   /* video layers ignore 3D stacking in most browsers: only show them on the open spread when nothing is turning */
